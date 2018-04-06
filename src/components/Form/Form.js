@@ -31,7 +31,6 @@ class Form extends Component {
     });
   }
   componentDidMount() {
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(successFunction.bind(this));
     } else {
@@ -50,10 +49,63 @@ class Form extends Component {
     }
 
     var myTime = getDateTimeFromTimestamp(1519193168);
-    console.log(myTime); // output 01/05/2000 11:00
+    // console.log(myTime); // output 01/05/2000 11:00
   }
 
-  onFormSubmit(e) {
+  getCity(e) {
+    e.preventDefault();
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${document.getElementById("cityField").value}&APPID=10615a3cff0d9f3ad9f1cd6a296c9d2a&units=metric`)
+      .then(this.handleErrors)
+      .then(res => res.json())
+      .then(res => {
+        let dtSunrise = new Date(res.sys.sunrise * 1000);
+        let sunrise =
+          dtSunrise.getHours() +
+          ":" +
+          ("0" + dtSunrise.getMinutes()).substr(-2) +
+          ":" +
+          ("0" + dtSunrise.getSeconds()).substr(-2);
+        let dtSunset = new Date(res.sys.sunset * 1000);
+        let sunset =
+          dtSunset.getHours() +
+          ":" +
+          ("0" + dtSunset.getMinutes()).substr(-2) +
+          ":" +
+          ("0" + dtSunset.getSeconds()).substr(-2);
+        this.setState({
+          weather: res.weather,
+          sun: {
+            sunrise: sunrise,
+            sunset: sunset
+          },
+          main: res.main,
+          wind: res.wind
+
+        }, function () {
+          // console.log(this.state.weather, this.state.sun);
+        })
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+
+    fetch(`https://api.openweathermap.org/data/2.5/forecast/?q=${document.getElementById("cityField").value}&APPID=10615a3cff0d9f3ad9f1cd6a296c9d2a&units=metric`)
+      .then(this.handleErrors)
+      .then(res => res.json())
+      .then(res => {
+        this.setState({
+          forecast: res.list
+        }, function () {
+          // forecast is now here
+          // console.log(this.state.forecast)
+        });
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
+
+  getCurrLocWeathr(e) {
     e.preventDefault();
 
     fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${this.lat}&lon=${this.long}&APPID=10615a3cff0d9f3ad9f1cd6a296c9d2a&units=metric`)
@@ -84,7 +136,7 @@ class Form extends Component {
           wind: res.wind
 
         }, function () {
-          console.log(this.state.weather, this.state.sun);
+          // console.log(this.state.weather, this.state.sun);
         })
       })
       .catch(function (error) {
@@ -99,7 +151,7 @@ class Form extends Component {
           forecast: res.list
         }, function () {
           // forecast is now here
-          console.log(this.state.forecast)
+          // console.log(this.state.forecast)
         });
       })
       .catch(function (error) {
@@ -110,10 +162,11 @@ class Form extends Component {
   render() {
     return (
       <div>
-        <form className="App-search" onSubmit={this.onFormSubmit.bind(this)}>
+        <form className="App-search">
           <fieldset>
-            {/* <input type="text" placeholder="City name here" id="cityField" /> */}
-            <button className="button button-primary" type="submit">Get Weather</button>
+            <input type="text" placeholder="City name here" id="cityField" />
+            <button onClick={this.getCurrLocWeathr.bind(this)} className="button button-primary">Get Weather</button>
+            <button onClick={this.getCity.bind(this)}>Get City Weather</button>
           </fieldset>
         </form>
         {this.state.weather && this.state.weather.length > 0 ?
